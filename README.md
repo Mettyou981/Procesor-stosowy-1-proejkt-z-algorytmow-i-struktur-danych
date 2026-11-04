@@ -15,17 +15,17 @@ Lista instrukcji procesora jest następująca:
 ;	średnik	zamień miejscami listę na wierzchołku stosu i listę bezpośrednio pod nim
 @	at	zdejmij ze stosu liczbę A, następnie włóż na stos kopię listy na A-tej pozycji na stosie (0 to wierzchołek stosu, 1 lista bezpośrednio pod nim itp.); program '0@ jest równoważny instrukcji :
 .	kropka	wczytaj znak ze standardowego wejścia i dołącz go na początek listy na wierzchołku stosu
->	większe niż	wypisz na standardowe wyjście pierwszy znak z listy na wierzchołku stosu i zdejmij listę z wierzchołka stosu
+\>	większe niż	wypisz na standardowe wyjście pierwszy znak z listy na wierzchołku stosu i zdejmij listę z wierzchołka stosu
 !	wykrzyknik	negacja logiczna: jeżeli na wierzchołku stosu jest pusta lista lub lista zawierająca pojedyńczy znak '0', zastąp ją listą zawierającą znak '1', w przeciwnym wypadku zastąp listę z wierzchołka stosu listą zawierającą znak '0'
 <	mniejsze niż	zdejmij ze stosu liczbę A, zdejmij ze stosu liczbę B, jeżeli B < A, umieść na stosie liczbę 1, w przeciwnym wypadku umieść na stosie liczbę 0
 =	równe	zdejmij ze stosu liczbę A, zdejmij ze stosu liczbę B, jeżeli B = A, umieść na stosie liczbę 1, w przeciwnym wypadku umieść na stosie liczbę 0
 ~	tylda	umieść na stosie liczbę równą numerowi tej instrukcji (wartość wskaźnika instrukcji)
 ?	znak zapytania	skok warunkowy: zdejmij ze stosu liczbę T, zdejmij ze stosu listę W, jeżeli W nie jest pusta i nie zawiera wyłącznie znaku '0', wpisz do wskaźnika instrukcji liczbę T i nie zwiększaj wskaźnika instrukcji;
--	minus	negacja: jeżeli ostatnim znakiem listy na szczycie stosu jest '-' (minus), usuń go z listy; w przeciwnym wypadku dołącz '-' na koniec listy na szczycie stosu
+\-	minus	negacja: jeżeli ostatnim znakiem listy na szczycie stosu jest '-' (minus), usuń go z listy; w przeciwnym wypadku dołącz '-' na koniec listy na szczycie stosu
 ^	daszek	wartość bezwzględna: jeżeli ostatnim znakiem listy na szczycie stosu '-' (minus) usuń go z listy
 $	dolar	podział: odłącz pierwszy znak z listy na szczycie stosu i włóż go na stos
-#	hasz	zdejmij ze stosu listę A; dołącz A na koniec listy na szczycie stosu
-+	plus	zdejmij ze stosu liczbę A, zdejmij ze stosu liczbę B, włóż na stos liczbę A + B
+\#	hasz	zdejmij ze stosu listę A; dołącz A na koniec listy na szczycie stosu
+\+	plus	zdejmij ze stosu liczbę A, zdejmij ze stosu liczbę B, włóż na stos liczbę A + B
 &	ampersand	wypisz na standardowe wyjście zawartość stosu w formacie:
 n: lista na n-tej pozycji na stosie
 ...
@@ -35,6 +35,7 @@ lista powinna być przedstawiona jako ciąg kolejnych znaków z listy (zaczynaj�
 ]	 	zdejmij ze stosu liczbę A, umieść na stosie znak o numerze A w ASCII
 [	 	zdejmij ze stosu listę A, umieść na stosie liczbę równą numerowi ASCII pierwszego znaku z listy A
 pozostałe znaki	 	dołącz ten znak na początek listy na szczycie stosu
+
 Wejście
 Pierwsza linia wejścia zawiera program do wykonania. W drugiej linii podane będą znaki, które będą podawane na standardowe wejście programu. Ani program ani wejście programu nie będzie zawierało białych znaków. Ilość instrukcji nie przekroczy 20000. Liczba znaków podanych na standardowe wejście nie przekroczy 20000.
 
@@ -48,7 +49,6 @@ Testy podzielone są na grupy, każda kolejna grupa rozszerza grupę poprzedzaj�
 
 Uwaga: testy są tak skonstruowane, aby przy rozsądnych parametrach do funkcji stosu wystarczyło. Jeżeli pod Visual Studio wstępuje stack overflow, nie znaczy to jeszcze, że na STOSie tak będzie (tu rozmiar stosu jest ustawiony na 10MB). Dostępny rozmiar stosu można w Visual Studio ustawić w opcjach projektu -> Linker -> System -> Stack Reserve Size (domyślnie jest 1MB).
 
-
 Testy
 1-3 (12.5%)
 instrukcje ' , : ; @ & pozostałe znaki, na stosie przechowywane będą tylko liczby mieszczące się w zakresie int-a
@@ -57,32 +57,31 @@ instrukcje ' , : ; @ & pozostałe znaki, na stosie przechowywane będą tylko li
 instrukcje ' , : ; @ & pozostałe znaki
 
 7-9 (12.5%)
-dodatkowo instrukcje . > - ^
+dodatkowo instrukcje . \> \- ^
 
 10-12 (12.5%)
-dodatkowo instrukcje [ ] $ #
+dodatkowo instrukcje [ ] $ \#
 
 13-16 (25%)
 dodatkowo instrukcje < = ! ~ ?
 
 17-19 (25%)
-dodatkowo instrukcja +
+dodatkowo instrukcja \+
 
 Przykład
 Wejście:
-'123'-456&+&
-
+\'123'-456&+&
 
 Wyjście:
-1: 321
-0: 654-
-0: 333-
+\1: 321
+\0: 654-
+\0: 333-
 
 Wejście:
-'...&$&
-123
+\'...&$&
+\123
 
 Wyjście:
-0: 321
-1: 21
+\0: 321 
+\1: 21 
 0: 3
