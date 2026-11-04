@@ -1,0 +1,520 @@
+#include <iostream>
+using namespace std;
+
+const int MAX = 20000;
+
+struct lista {
+    char wartosc;
+    lista* next;
+    lista* prev;
+};
+
+struct stos_element {
+    lista* lista;
+    stos_element* next;
+};
+
+void wypiszListe(lista* l) {
+    if (l == nullptr) return;
+    cout << l->wartosc;
+    wypiszListe(l->next);
+}
+
+void wypiszStos(stos_element* stos, int indeks) {
+    if (stos == nullptr) return;
+    wypiszStos(stos->next, indeks + 1);
+    cout << indeks << ": ";
+    wypiszListe(stos->lista);
+    cout << endl;
+}
+
+lista* kopiaListy(lista* l, lista* prev = nullptr) {
+    if (l == nullptr) return nullptr;
+    lista* nowy = new lista{ l->wartosc, nullptr, prev };
+    nowy->next = kopiaListy(l->next, nowy);
+    return nowy;
+}
+
+void wykonajOperacjeDwukropek(stos_element*& stos) {
+    if (stos != nullptr) {
+        lista* skopiowana_lista = kopiaListy(stos->lista);
+        stos_element* nowy = new stos_element{ skopiowana_lista, stos };
+        stos = nowy;
+    }
+}
+
+void wykonajOperacjeUsunZeStosu(stos_element*& stos) {
+    if (stos == nullptr) return;
+    lista* l = stos->lista;
+    while (l != nullptr) {
+        lista* do_usuniecia = l;
+        l = l->next;
+        delete do_usuniecia;
+    }
+    stos_element* do_usuniecia = stos;
+    stos = stos->next;
+    delete do_usuniecia;
+}
+
+void wykonajOperacjeZamienMiejscami(stos_element* stos) {
+    if (stos == nullptr || stos->next == nullptr) return;
+    lista* temp = stos->lista;
+    stos->lista = stos->next->lista;
+    stos->next->lista = temp;
+}
+
+int odczytajLiczbeZListy(lista* l, int mnoznik = 1) {
+    if (l == nullptr) return 0;
+    int cyfra = l->wartosc - '0';
+    return cyfra * mnoznik + odczytajLiczbeZListy(l->next, mnoznik * 10);
+}
+
+void wykonajOperacjeAt(stos_element*& stos) {
+    if (stos == nullptr || stos->lista == nullptr) return;
+    int A = odczytajLiczbeZListy(stos->lista);
+    lista* l = stos->lista;
+    while (l != nullptr) {
+        lista* do_usuniecia = l;
+        l = l->next;
+        delete do_usuniecia;
+    }
+    stos_element* do_usuniecia = stos;
+    stos = stos->next;
+    delete do_usuniecia;
+
+    stos_element* temp = stos;
+    for (int i = 0; i < A && temp != nullptr; i++) {
+        temp = temp->next;
+    }
+
+    if (temp != nullptr) {
+        lista* kopia = kopiaListy(temp->lista);
+        stos_element* nowy = new stos_element{ kopia, stos };
+        stos = nowy;
+    }
+}
+void dodajNaPoczatekListy(stos_element* stos, char znak) {
+    if (stos == nullptr) return;
+
+    // Dodaj nowy element na początek rekurencyjnie
+    if (stos->lista == nullptr) {
+        stos->lista = new lista{ znak, nullptr, nullptr };
+    }
+    else {
+        lista* nowy = new lista{ znak, stos->lista, nullptr };
+        stos->lista->prev = nowy;
+        stos->lista = nowy;
+    }
+}
+void wykonajOperacjeWypiszIZdejmij(stos_element*& stos) {
+    if (stos == nullptr || stos->lista == nullptr) return;
+
+    // Wypisz pierwszy znak z listy
+    cout << stos->lista->wartosc;
+
+    // Zwolnij całą listę
+    lista* l = stos->lista;
+    while (l != nullptr) {
+        lista* do_usuniecia = l;
+        l = l->next;
+        delete do_usuniecia;
+    }
+
+    // Usuń element stosu
+    stos_element* do_usuniecia = stos;
+    stos = stos->next;
+    delete do_usuniecia;
+}
+void sprawdzOstatniMinusRekurencyjnie(lista*& glowa, lista* aktualny) {
+    if (aktualny == nullptr) {
+        // Doszliśmy do końca - dodajemy '-' na koniec
+        lista* nowy = new lista{ '-', nullptr, glowa };
+        if (glowa != nullptr) {
+            lista* ostatni = glowa;
+            while (ostatni->next != nullptr) {
+                ostatni = ostatni->next;
+            }
+            ostatni->next = nowy;
+            nowy->prev = ostatni;
+        }
+        else {
+            glowa = nowy;
+        }
+        return;
+    }
+
+    if (aktualny->next == nullptr) { // Jesteśmy na ostatnim elemencie
+        if (aktualny->wartosc == '-') {
+            // Usuwamy '-'
+            if (aktualny->prev != nullptr) {
+                aktualny->prev->next = nullptr;
+            }
+            else {
+                glowa = nullptr; // To był jedyny element
+            }
+            delete aktualny;
+        }
+        else {
+            // Dodajemy '-' na koniec
+            lista* nowy = new lista{ '-', nullptr, aktualny };
+            aktualny->next = nowy;
+        }
+        return;
+    }
+
+    sprawdzOstatniMinusRekurencyjnie(glowa, aktualny->next);
+}
+
+void wykonajOperacjeMinus(stos_element*& stos) {
+    if (stos == nullptr) return;
+
+    sprawdzOstatniMinusRekurencyjnie(stos->lista, stos->lista);
+}
+void usunOstatniMinusRekurencyjnie(lista*& glowa, lista* aktualny) {
+    if (aktualny == nullptr) return;
+
+    if (aktualny->next == nullptr) { // Jesteśmy na ostatnim elemencie
+        if (aktualny->wartosc == '-') {
+            if (aktualny->prev != nullptr) {
+                aktualny->prev->next = nullptr;
+            }
+            else {
+                glowa = nullptr; // To był jedyny element w liście
+            }
+            delete aktualny;
+        }
+        return;
+    }
+
+    usunOstatniMinusRekurencyjnie(glowa, aktualny->next);
+}
+
+void wykonajOperacjeDaszek(stos_element*& stos) {
+    if (stos == nullptr || stos->lista == nullptr) return;
+
+    usunOstatniMinusRekurencyjnie(stos->lista, stos->lista);
+}
+void wykonajOperacjeKodASCII(stos_element*& stos) {
+    if (stos == nullptr || stos->lista == nullptr) return;
+
+    // Zdejmij listę ze stosu
+    lista* listaA = stos->lista;
+    stos->lista = nullptr;
+    stos_element* doUsuniecia = stos;
+    stos = stos->next;
+    delete doUsuniecia;
+
+    // Jeśli lista była pusta, nic więcej nie robimy
+    if (listaA == nullptr) return;
+
+    // Pobierz pierwszy znak z listy
+    char pierwszyZnak = listaA->wartosc;
+    int kodASCII = static_cast<unsigned char>(pierwszyZnak); // uwzględnij też znaki ujemne!
+
+    // Zwolnij pamięć po zdjętej liście
+    while (listaA != nullptr) {
+        lista* temp = listaA;
+        listaA = listaA->next;
+        delete temp;
+    }
+
+    // Utwórz nową listę z cyframi kodu ASCII (w odwrotnej kolejności)
+    lista* nowaLista = nullptr;
+    lista* ostatni = nullptr;
+
+    if (kodASCII == 0) {
+        nowaLista = new lista{ '0', nullptr, nullptr };
+    }
+    else {
+        while (kodASCII > 0) {
+            int cyfra = kodASCII % 10;
+            lista* nowy = new lista{ static_cast<char>('0' + cyfra), nullptr, nullptr };
+
+            if (ostatni != nullptr) {
+                ostatni->next = nowy;
+                nowy->prev = ostatni;
+            }
+            else {
+                nowaLista = nowy; // pierwszy element staje się początkiem listy
+            }
+
+            ostatni = nowy;
+            kodASCII /= 10;
+        }
+
+        // teraz odwróć listę, bo była tworzona od końca
+        // chcemy, żeby nowaLista wskazywała na pierwszy element (najbardziej znacząca cyfra)
+        
+      if (nowaLista != nullptr) // Sprawdzenie, czy nowaLista nie jest nullptr
+      { 
+          while (nowaLista->prev != nullptr) 
+          {
+              nowaLista = nowaLista->prev;
+          }
+      }
+       
+    }
+
+    // Utwórz nowy element stosu z listą cyfr
+    stos_element* nowyElement = new stos_element{ nowaLista, stos };
+    stos = nowyElement;
+}
+void wykonajOperacjeZnakASCII(stos_element*& stos) {
+    if (stos == nullptr || stos->lista == nullptr) return;
+
+    // Przechodzimy na koniec listy
+    lista* current = stos->lista;
+    while (current->next != nullptr) {
+        current = current->next;
+    }
+
+    // Teraz idziemy od końca do początku, tworząc liczbę
+    int liczba = 0;
+    while (current != nullptr) {
+        if (isdigit(current->wartosc)) {
+            liczba = liczba * 10 + (current->wartosc - '0');
+        }
+        current = current->prev;
+    }
+
+    // Ogranicz do zakresu ASCII
+    if (liczba < 0 || liczba > 127) {
+        liczba = 0;
+    }
+
+    // Zwolnij starą listę
+    lista* toDelete = stos->lista;
+    while (toDelete != nullptr) {
+        lista* temp = toDelete;
+        toDelete = toDelete->next;
+        delete temp;
+    }
+
+    // Wstaw nową listę z pojedynczym znakiem ASCII
+    stos->lista = new lista{ static_cast<char>(liczba), nullptr, nullptr };
+}
+
+void wykonajOperacjeDolar(stos_element*& stos) {
+    if (stos == nullptr || stos->lista == nullptr) return;
+
+    lista* pierwszy = stos->lista;
+    lista* reszta = pierwszy->next;
+
+    // Odłącz pierwszy element
+    pierwszy->next = nullptr;
+    pierwszy->prev = nullptr;
+
+    // Zmodyfikuj istniejącą listę na stosie
+    stos->lista = reszta;
+    if (reszta != nullptr) {
+        reszta->prev = nullptr;
+    }
+
+    // Utwórz nowy element stosu z pierwszym elementem
+    stos_element* nowyElement = new stos_element{ pierwszy, stos };
+    stos = nowyElement;
+}
+void znajdzKoniecIDolacz(lista* obecny, lista* listaA) {
+    if (obecny->next == nullptr) {
+        obecny->next = listaA;
+        if (listaA != nullptr) {
+            listaA->prev = obecny;
+        }
+    }
+    else {
+        znajdzKoniecIDolacz(obecny->next, listaA);
+    }
+}
+
+void wykonajOperacjeHasz(stos_element*& stos) {
+    if (stos == nullptr || stos->next == nullptr) return;
+
+    // Przechowaj wskaźniki do zwolnienia później
+    stos_element* elementA = stos;
+    lista* listaA = elementA->lista;
+
+    // Przesuń stos do przodu
+    stos = stos->next;
+    elementA->next = nullptr;
+
+    if (stos->lista == nullptr) {
+        stos->lista = listaA;
+    }
+    else {
+        znajdzKoniecIDolacz(stos->lista, listaA);
+    }
+
+    // Zwolnij pamięć - tylko element stosu, lista jest teraz częścią innego elementu
+    delete elementA;
+}
+void wykonajOperacjeMniejszeNiz(stos_element*& stos) {
+    if (stos == nullptr || stos->next == nullptr) return; // za mało elementów na stosie
+
+    // Zdjęcie A (szczyt stosu)
+    lista* listaA = stos->lista;
+    stos_element* elemA = stos;
+    stos = stos->next;
+
+    // Zdjęcie B (kolejny element)
+    lista* listaB = stos->lista;
+    stos_element* elemB = stos;
+    stos = stos->next;
+
+    // Zamiana list A i B na liczby (od lewej do prawej)
+    int liczbaA = 0;
+    lista* curr = listaA;
+    while (curr != nullptr) {
+        if (isdigit(curr->wartosc)) {
+            liczbaA = liczbaA * 10 + (curr->wartosc - '0');
+        }
+        curr = curr->next;
+    }
+
+    int liczbaB = 0;
+    curr = listaB;
+    while (curr != nullptr) {
+        if (isdigit(curr->wartosc)) {
+            liczbaB = liczbaB * 10 + (curr->wartosc - '0');
+        }
+        curr = curr->next;
+    }
+
+    // Zwolnij stare listy i elementy stosu
+    while (listaA != nullptr) {
+        lista* temp = listaA;
+        listaA = listaA->next;
+        delete temp;
+    }
+    delete elemA;
+
+    while (listaB != nullptr) {
+        lista* temp = listaB;
+        listaB = listaB->next;
+        delete temp;
+    }
+    delete elemB;
+
+    // Wynik porównania
+    char wynik = (liczbaB < liczbaA) ? '1' : '0';
+
+    // Utwórz nowy element stosu z wynikiem
+    lista* nowaLista = new lista{ wynik, nullptr, nullptr };
+    stos_element* nowyElement = new stos_element{ nowaLista, stos };
+    stos = nowyElement;
+}
+int main() {
+    char program[MAX];
+    char wejscie[MAX];
+    int dlugosc_programu = 0;
+    int dlugosc_wejscia = 0;
+    cin >> program >> wejscie;
+    
+    while (program[dlugosc_programu] != '\0') dlugosc_programu++;
+
+    while (wejscie[dlugosc_wejscia] != '\0') dlugosc_wejscia++;
+
+    int ip = 0; // instruction pointer
+    int input_pos = 0;
+
+    stos_element* stos = nullptr;
+    // Wczytanie programu
+    char znak;
+    while (cin.get(znak) && znak != '\n') {
+        program[dlugosc_programu++] = znak;
+    }
+
+    // Wczytanie wejścia
+    while (cin.get(znak) && znak != '\n') {
+        wejscie[dlugosc_wejscia++] = znak;
+    }
+
+    while (ip < dlugosc_programu) {
+        char instr = program[ip];
+
+        switch (instr) {
+        case '\'': {
+            stos_element* nowy = new stos_element{ nullptr, stos };
+            stos = nowy;
+            break;
+        }
+        case ',': {
+            wykonajOperacjeUsunZeStosu(stos);
+            break;
+        }
+        case ':': {
+            wykonajOperacjeDwukropek(stos);
+            break;
+        }
+        case ';': {
+            wykonajOperacjeZamienMiejscami(stos);
+            break;
+        }
+        case '@': {
+            wykonajOperacjeAt(stos);
+            break;
+        }
+        case '&': {
+            wypiszStos(stos, 0);
+            break;
+        }
+        case '.': {
+            if (input_pos < dlugosc_wejscia) {
+                dodajNaPoczatekListy(stos, wejscie[input_pos]);
+                input_pos++;
+            }
+            break;
+        }
+        case '>': {
+            wykonajOperacjeWypiszIZdejmij(stos);
+            break;
+        }
+        case '-': {
+            wykonajOperacjeMinus(stos);
+            break;
+        }
+        case '^': {
+            wykonajOperacjeDaszek(stos);
+            break;
+        }
+        case '[': {  // zdejmij ze stosu listę A, umieść na stosie liczbę równą numerowi ASCII pierwszego znaku z listy A
+            wykonajOperacjeKodASCII(stos);
+            break;
+        }
+        case ']': {  // zdejmij ze stosu liczbę A, umieść na stosie znak o numerze A w ASCII
+            wykonajOperacjeZnakASCII(stos);
+            break;
+        }
+        case '$': { //podział: odłącz pierwszy znak z listy na szczycie stosu i włóż go na stos
+            wykonajOperacjeDolar(stos);
+            break;
+        }
+        case '#': {
+            wykonajOperacjeHasz(stos);
+            break;
+        }
+		case'<': {
+			wykonajOperacjeMniejszeNiz(stos);
+			break;
+		}
+		
+        default: {
+            if (stos != nullptr) {
+                lista* nowy_element = new lista{ instr, stos->lista, nullptr };
+                if (stos->lista != nullptr) {
+                    stos->lista->prev = nowy_element;
+                }
+                stos->lista = nowy_element;
+            }
+            break;
+        }
+        }
+        ip++;
+    }
+
+    // Czyszczenie pamięci
+    while (stos != nullptr) {
+        wykonajOperacjeUsunZeStosu(stos);
+    }
+
+    return 0;
+}

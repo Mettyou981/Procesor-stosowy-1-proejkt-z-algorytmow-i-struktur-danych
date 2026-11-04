@@ -1,0 +1,154 @@
+#include <iostream>
+using namespace std;
+
+struct lista {
+    char wartosc;
+    lista* next;
+    lista* prev; // Dodany wskaźnik do poprzedniego elementu
+};
+
+struct stos_element {
+    lista* lista;
+    stos_element* next;
+};
+
+// Funkcja rekurencyjna do wypisywania listy
+void wypiszListe(lista* l) {
+    if (l == nullptr) return; // Bazowy warunek rekurencji
+    cout << l->wartosc;
+    wypiszListe(l->next); // Rekurencyjne wywołanie dla kolejnego elementu
+}
+
+// Funkcja rekurencyjna do wypisywania stosu
+void wypiszStos(stos_element* stos, int indeks) {
+    if (stos == nullptr) return; // Bazowy warunek rekurencji
+
+    // Rekurencyjne wywołanie dla kolejnego elementu stosu (od góry do dołu)
+    wypiszStos(stos->next, indeks + 1);
+
+    // Wypisanie listy na bieżącym poziomie stosu z normalnym indeksem
+    cout << indeks << ": ";
+    wypiszListe(stos->lista);
+    cout << endl;
+}
+
+// Funkcja rekurencyjna do kopiowania listy
+lista* kopiaListy(lista* l) {
+    if (l == nullptr) return nullptr; // Bazowy warunek rekurencji (pusta lista)
+
+    // Tworzymy nowy element i rekurencyjnie kopiujemy resztę listy
+    lista* nowy = new lista{ l->wartosc, kopiaListy(l->next) };
+    return nowy; // Zwracamy nową skopiowaną listę
+}
+
+// Funkcja rekurencyjna realizująca operację ':'
+void wykonajOperacjeDwukropek(stos_element*& stos) {
+    if (stos != nullptr) {
+        // Kopiujemy listę z wierzchołka stosu
+        lista* skopiowana_lista = kopiaListy(stos->lista);
+
+        // Wstawiamy nową skopiowaną listę na stos
+        stos_element* nowy = new stos_element{ skopiowana_lista, stos };
+        stos = nowy;
+    }
+}
+
+// Funkcja realizująca operację ','
+void wykonajOperacjeUsunZeStosu(stos_element*& stos) {
+    if (stos == nullptr) return; // Bazowy warunek rekurencji - stos pusty
+
+    stos_element* do_usuniecia = stos; // Zapisz obecny wierzchołek stosu
+    stos = stos->next; // Przesuń stos na następny element
+
+    delete do_usuniecia; // Usuń usunięty wierzchołek stosu
+}
+
+// Funkcja rekurencyjna realizująca operację ';'
+void wykonajOperacjeZamienMiejscami(stos_element* stos) {
+    if (stos == nullptr || stos->next == nullptr) return; // Warunek bazowy: Stos ma mniej niż 2 elementy
+
+    lista* temp = stos->lista; // Przechowujemy listę na wierzchołku stosu
+    stos->lista = stos->next->lista; // Zmieniamy wierzchołek stosu
+    stos->next->lista = temp; // Przypisujemy wcześniej przechowaną listę na następny element
+}
+
+// Rekurencyjnie oblicz wartość liczby zapisanej w liście (odwrócona kolejność)
+int odczytajLiczbeZListy(lista* l, int mnoznik = 1) {
+    if (l == nullptr) return 0;
+    int cyfra = l->wartosc - '0';
+    return cyfra * mnoznik + odczytajLiczbeZListy(l->next, mnoznik * 10);
+}
+
+void wykonajOperacjeAt(stos_element*& stos) {
+    if (stos == nullptr || stos->lista == nullptr) return;
+
+    // Odczytaj liczbę z listy
+    int A = odczytajLiczbeZListy(stos->lista);
+
+    // Zdejmij wierzchołek stosu
+    stos_element* do_usuniecia = stos;
+    stos = stos->next;
+    delete do_usuniecia;
+
+    // Przejdź do A-tego elementu stosu
+    stos_element* temp = stos;
+    for (int i = 0; i < A && temp != nullptr; i++) {
+        temp = temp->next;
+    }
+
+    // Jeśli znaleziono, kopiujemy wskaźnik listy z tej pozycji na nowy wierzchołek
+    if (temp != nullptr) {
+        stos_element* nowy = new stos_element{ temp->lista, stos };
+        stos = nowy;
+    }
+}
+
+int main() {
+    char warunek;
+    stos_element* stos = nullptr;
+
+    while (cin >> warunek ) {
+        switch (warunek) {
+        case '\'': {
+            // Włóż na stos pustą listę
+            stos_element* nowy = new stos_element{ nullptr, stos };
+            stos = nowy;
+            break;
+        }
+        case ',': {
+            // Zdejmij listę ze stosu - wykonujemy rekurencyjnie
+            wykonajOperacjeUsunZeStosu(stos);
+            break;
+        }
+        case ':': {
+            // Włóż na stos kopię listy z wierzchołka stosu - wykonujemy rekurencyjnie
+            wykonajOperacjeDwukropek(stos);
+            break;
+        }
+        case ';': {
+            // Zamień miejscami listy na wierzchołku stosu i pod nim - wykonujemy rekurencyjnie
+            wykonajOperacjeZamienMiejscami(stos);
+            break;
+        }
+        case '@': {
+            // Zdejmij liczbę A i wstaw na stos kopię listy na A-tej pozycji
+            wykonajOperacjeAt(stos);
+            break;
+        }
+        case '&': {
+            wypiszStos(stos, 0);
+            break;
+        }
+        default: {
+            // Dla pozostałych znaków dołącz je na początek listy na wierzchołku stosu
+            if (stos != nullptr) {
+                lista* nowy_element = new lista{ warunek, stos->lista };
+                stos->lista = nowy_element;  // Ustawiamy go jako nową głowę listy
+            }
+            break;
+        }
+        }
+    }
+
+    return 0;
+}
